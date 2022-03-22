@@ -7,15 +7,15 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"time"
+	"toolBox/config"
 	"toolBox/models"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/dgrijalva/jwt-go.v3"
 )
 
 func getAppAccessToken() string {
-	data := url.Values{"app_id": {"cli_a2a6ea92b5b9500d"}, "app_secret": {"pk18CteJE2rP926XZgQ33gWjE3RE0SrL"}}
+	app_id, app_secret := config.GetAPPID(), config.GetAPPSecret()
+	data := url.Values{"app_id": {app_id}, "app_secret": {app_secret}}
 	_url := "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 	resp, err := http.PostForm(_url, data)
 	var match string
@@ -63,12 +63,12 @@ func getUserMessage(_code string) string {
 }
 
 func Login(c *gin.Context) {
-	app_id := `cli_a2a6ea92b5b9500d`
-	callbackUrl := `http://127.0.0.1:8888/callback/path`
-	state := "stateOK"
-	redirectUrl := `https://open.feishu.cn/open-apis/authen/v1/index?redirect_uri=` + callbackUrl + `&app_id=` + app_id + `&state=` + state
-	c.String(http.StatusFound, redirectUrl)
-
+	app_id := config.GetAPPID()
+	callbackUrl := "http://" + config.GetServerHost() + ":" + config.GetServerPort() + "/callback/path"
+	// state := "stateOK"
+	redirectUrl := `https://open.feishu.cn/open-apis/authen/v1/index?redirect_uri=` + callbackUrl + `&app_id=` + app_id
+	// c.String(http.StatusFound, redirectUrl)
+	c.Redirect(http.StatusFound, redirectUrl)
 }
 
 type Data struct {
@@ -103,54 +103,56 @@ func Callback(c *gin.Context) {
 	var user User
 	err := json.Unmarshal([]byte(userMsg), &user)
 	var name string
-	var Union_id string
+	var UnionID string
 	if err == nil {
 		name = user.Data.Name
 		// Union_id是飞书账号的唯一标识
-		Union_id = user.Data.Union_id
-		if !models.IsExist(Union_id) {
+		UnionID = user.Data.Union_id
+		if !models.IsExist(UnionID) {
 			// 用户不存在，在数据库中写入用户信息
-			models.DatabaseWrite(name, Union_id)
+			models.DatabaseWrite(name, UnionID)
 		}
-		token := generateToken(Union_id)
-		redirect_url := "http://127.0.0.1:8888/home"
-		c.JSON(http.StatusFound, gin.H{"token": token, "redirect_url": redirect_url})
+		// token := generateToken(Union_id)
+		SetCookie(c, UnionID)
+		redirect_url := config.GetFrontendUrl()
+		c.Redirect(http.StatusFound, redirect_url)
 	} else {
-		c.String(http.StatusInternalServerError, "callback error!")
+		// c.Redirect(http.StatusInternalServerError, "callback error!")
+		c.Redirect(http.StatusInternalServerError, "/login")
 	}
 }
 
-//token加密密钥
-var Key = []byte("ecnc")
+// //token加密密钥
+// var Key = []byte("")
 
-func generateToken(Union_id string) string {
-	// 用户登录有效时间为2小时
-	expireTime := time.Now().Add(2 * time.Hour)
-	claims := &jwt.StandardClaims{
-		Id:        Union_id,
-		ExpiresAt: expireTime.Unix(),
-		IssuedAt:  time.Now().Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, _ := token.SignedString(Key)
-	return tokenStr
-}
+// func generateToken(Union_id string) string {
+// 	// 用户登录有效时间为2小时
+// 	expireTime := time.Now().Add(2 * time.Hour)
+// 	claims := &jwt.StandardClaims{
+// 		Id:        Union_id,
+// 		ExpiresAt: expireTime.Unix(),
+// 		IssuedAt:  time.Now().Unix(),
+// 	}
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+// 	tokenStr, _ := token.SignedString(Key)
+// 	return tokenStr
+// }
 
-func VerifyToken(tokenStr string) bool {
-	if tokenStr == "" {
-		return false
-	}
-	token, _, err := ParseToken(tokenStr)
-	if err != nil || !token.Valid {
-		return false
-	}
-	return true
-}
+// func VerifyToken(tokenStr string) bool {
+// 	if tokenStr == "" {
+// 		return false
+// 	}
+// 	token, _, err := ParseToken(tokenStr)
+// 	if err != nil || !token.Valid {
+// 		return false
+// 	}
+// 	return true
+// }
 
-func ParseToken(tokenString string) (*jwt.Token, *jwt.StandardClaims, error) {
-	Claims := &jwt.StandardClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, Claims, func(token *jwt.Token) (i interface{}, err error) {
-		return Key, nil
-	})
-	return token, Claims, err
-}
+// func ParseToken(tokenString string) (*jwt.Token, *jwt.StandardClaims, error) {
+// 	Claims := &jwt.StandardClaims{}
+// 	token, err := jwt.ParseWithClaims(tokenString, Claims, func(token *jwt.Token) (i interface{}, err error) {
+// 		return Key, nil
+// 	})
+// 	return token, Claims, err
+// }
