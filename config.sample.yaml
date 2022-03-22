@@ -1,0 +1,20 @@
+DATABASE:
+ host: "127.0.0.1"
+ port: 5432
+ user: "username"
+ password: "password"
+ dbname: "dbname"
+
+APP:
+ app_id: "cli_1234567"
+ app_secret: "app_secret"
+
+SERVER:
+ host: "127.0.0.1"
+ port: "8888"
+
+# 飞书认证后跳转到callback后再跳转的目的页面
+FrontentUrl: "http://127.0.0.1:8888/home"
+
+
+
