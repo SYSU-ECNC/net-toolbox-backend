@@ -25,16 +25,16 @@ func connectDB() *sql.DB {
 var DB = connectDB()
 
 //将第一次登录的用户的信息写入数据库
-func DatabaseWrite(name, Union_id string) {
-	_, err := DB.Exec("insert into ecncer(name,union_id) values($1,$2)", name, Union_id)
+func AddUser(name, UnionID string) {
+	_, err := DB.Exec("insert into ecncer(name,union_id) values($1,$2)", name, UnionID)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // 判断用户是否已存在
-func IsExist(Union_id string) bool {
-	row, err := DB.Query(`SELECT count(*) from ecncer where union_id = $1`, Union_id)
+func IsExist(UnionID string) bool {
+	row, err := DB.Query(`SELECT count(*) from ecncer where union_id = $1`, UnionID)
 	if err == nil {
 		var count int
 		for row.Next() {
