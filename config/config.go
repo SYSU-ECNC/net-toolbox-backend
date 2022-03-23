@@ -11,43 +11,51 @@ func init() {
 }
 
 func GetDBHost() string {
-	return viper.Get("DATABASE.host").(string)
+	return viper.Get("database.host").(string)
 }
 
 func GetDBPort() int {
-	return viper.Get("DATABASE.port").(int)
+	return viper.Get("database.port").(int)
 }
 
 func GetDBUser() string {
-	return viper.Get("DATABASE.user").(string)
+	return viper.Get("database.user").(string)
 }
 
 func GetDBPassword() string {
-	return viper.Get("DATABASE.password").(string)
+	return viper.Get("database.password").(string)
 }
 
 func GetDBName() string {
-	return viper.Get("DATABASE.dbname").(string)
+	return viper.Get("database.dbname").(string)
 }
 
 func GetAPPID() string {
-	return viper.Get("APP.app_id").(string)
+	return viper.Get("app.app_id").(string)
 }
 
 func GetAPPSecret() string {
-	return viper.Get("APP.app_secret").(string)
+	return viper.Get("app.app_secret").(string)
 }
 
 func GetServerHost() string {
-	return viper.Get("SERVER.host").(string)
+	return viper.Get("server.host").(string)
 }
 
 func GetServerPort() string {
-	return viper.Get("SERVER.port").(string)
+	return viper.Get("server.port").(string)
 }
 
 func GetFrontendUrl() string {
-	return viper.Get("FrontentUrl").(string)
+	return viper.Get("publicUrl.frontentUrl").(string)
+}
+
+func GetLoginUrl() string {
+	return viper.Get("publicUrl.loginUrl").(string)
+}
+
+func GetCallbackUrl() string {
+	return viper.Get("publicUrl.callbackUrl").(string)
 }
 
 // // 实现config.yml对应的结构体，以便于读取
