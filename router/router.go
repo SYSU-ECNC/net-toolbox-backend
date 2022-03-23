@@ -23,6 +23,6 @@ func SetupRouters() *gin.Engine {
 	r.GET("/home", frontendHome)
 	// r.GET("/home", user.Home)
 	// 返回json对象
-	r.GET("/get/user/me", user.GetUserName)
+	r.GET("/get/user/name", user.GetUserName)
 	return r
 }
