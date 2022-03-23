@@ -13,6 +13,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 实现tenantAccessToken缓存
+var tenantAccessToken string
+
+func init() {
+	tenantAccessToken = getAppAccessToken()
+}
+
 func getAppAccessToken() string {
 	app_id, app_secret := config.GetAPPID(), config.GetAPPSecret()
 	data := url.Values{"app_id": {app_id}, "app_secret": {app_secret}}
@@ -51,7 +58,7 @@ func getUserMessage(_code string) string {
 	client := &http.Client{}
 	req, _ := http.NewRequest("POST", _url, bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", "Bearer "+getAppAccessToken())
+	req.Header.Set("Authorization", "Bearer "+tenantAccessToken)
 	resp, err := client.Do(req)
 	var respBody []byte
 	if err == nil {
@@ -64,10 +71,8 @@ func getUserMessage(_code string) string {
 
 func Login(c *gin.Context) {
 	app_id := config.GetAPPID()
-	callbackUrl := "http://" + config.GetServerHost() + ":" + config.GetServerPort() + "/callback/path"
-	// state := "stateOK"
+	callbackUrl := config.GetCallbackUrl()
 	redirectUrl := `https://open.feishu.cn/open-apis/authen/v1/index?redirect_uri=` + callbackUrl + `&app_id=` + app_id
-	// c.String(http.StatusFound, redirectUrl)
 	c.Redirect(http.StatusFound, redirectUrl)
 }
 
@@ -110,49 +115,12 @@ func Callback(c *gin.Context) {
 		UnionID = user.Data.Union_id
 		if !models.IsExist(UnionID) {
 			// 用户不存在，在数据库中写入用户信息
-			models.DatabaseWrite(name, UnionID)
+			models.AddUser(name, UnionID)
 		}
-		// token := generateToken(Union_id)
-		SetCookie(c, UnionID)
+		SetCookie(c, UnionID, name)
 		redirect_url := config.GetFrontendUrl()
 		c.Redirect(http.StatusFound, redirect_url)
 	} else {
-		// c.Redirect(http.StatusInternalServerError, "callback error!")
-		c.Redirect(http.StatusInternalServerError, "/login")
+		c.Redirect(http.StatusInternalServerError, config.GetLoginUrl())
 	}
 }
-
-// //token加密密钥
-// var Key = []byte("")
-
-// func generateToken(Union_id string) string {
-// 	// 用户登录有效时间为2小时
-// 	expireTime := time.Now().Add(2 * time.Hour)
-// 	claims := &jwt.StandardClaims{
-// 		Id:        Union_id,
-// 		ExpiresAt: expireTime.Unix(),
-// 		IssuedAt:  time.Now().Unix(),
-// 	}
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-// 	tokenStr, _ := token.SignedString(Key)
-// 	return tokenStr
-// }
-
-// func VerifyToken(tokenStr string) bool {
-// 	if tokenStr == "" {
-// 		return false
-// 	}
-// 	token, _, err := ParseToken(tokenStr)
-// 	if err != nil || !token.Valid {
-// 		return false
-// 	}
-// 	return true
-// }
-
-// func ParseToken(tokenString string) (*jwt.Token, *jwt.StandardClaims, error) {
-// 	Claims := &jwt.StandardClaims{}
-// 	token, err := jwt.ParseWithClaims(tokenString, Claims, func(token *jwt.Token) (i interface{}, err error) {
-// 		return Key, nil
-// 	})
-// 	return token, Claims, err
-// }

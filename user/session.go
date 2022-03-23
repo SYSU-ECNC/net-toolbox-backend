@@ -28,35 +28,37 @@ func init() {
 	}
 }
 
-func SetCookie(c *gin.Context, UnionID string) {
+func SetCookie(c *gin.Context, UnionID, name string) {
 	session, _ := store.Get(c.Request, "sessionID")
 	session.Values["UnionID"] = UnionID
+	session.Values["name"] = name
 
 	// 将set-cookie写入到response里
 	session.Save(c.Request, c.Writer)
-}
-
-// 生成重定向登录url
-func spanLoginUrl() string {
-	url := "http://" + config.GetServerHost() + ":" + config.GetServerPort() + "/login"
-	return url
 }
 
 // 验证cookie是否合法，不合法重定向到登录界面
 func VerifyCookie(c *gin.Context) bool {
 	session, err := store.Get(c.Request, "sessionID")
 	if err != nil || session.Values["UnionID"] == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"redirectUrl": spanLoginUrl()})
+		c.JSON(http.StatusUnauthorized, gin.H{"redirectUrl": config.GetLoginUrl()})
 		return false
 	}
 	return true
 }
 
-// 使用此函数前默认已经使用了
 func GetIDFromCookie(c *gin.Context) string {
 	if !VerifyCookie(c) {
 		return ""
 	}
 	session, _ := store.Get(c.Request, "sessionID")
 	return session.Values["UnionID"].(string)
+}
+
+func GetNameFromCookie(c *gin.Context) string {
+	if !VerifyCookie(c) {
+		return ""
+	}
+	session, _ := store.Get(c.Request, "sessionID")
+	return session.Values["name"].(string)
 }
