@@ -27,9 +27,9 @@ func init() {
 	c.Server.Host = viper.Get("server.host").(string)
 	c.Server.Port = viper.Get("server.port").(string)
 
-	c.PublicUrl.CallbackUrl = viper.Get("publicUrl.frontentUrl").(string)
+	c.PublicUrl.CallbackUrl = viper.Get("publicUrl.callbackUrl").(string)
 	c.PublicUrl.LoginUrl = viper.Get("publicUrl.loginUrl").(string)
-	c.PublicUrl.FrontentUrl = viper.Get("publicUrl.callbackUrl").(string)
+	c.PublicUrl.FrontentUrl = viper.Get("publicUrl.frontentUrl").(string)
 }
 
 type Config struct {
