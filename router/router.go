@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"toolBox/agent"
 	"toolBox/user"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +16,25 @@ func frontendHome(c *gin.Context) {
 func SetupRouters() *gin.Engine {
 	r := gin.Default()
 
-	// 登录页
 	r.GET("/login", user.Login)
-	// 飞书跳转后端url
 	r.GET("/callback", user.Callback)
-	// 模拟前端主页页面
-	r.GET("/home", frontendHome)
-	// r.GET("/home", user.Home)
-	// 返回json对象
-	r.GET("/get/user/name", user.GetUserName)
+
+	// user api
+	userRouters := r.Group("/user")
+	userRouters.Use(user.CheckCookie)
+
+	userRouters.GET("/name", user.GetUserName)
+	userRouters.GET("/home", frontendHome)
+	userRouters.GET("/registration/token", agent.GetToken)
+	userRouters.POST("/add/task", agent.AddTaskByUser)
+
+	// protectedRouters.GET("tasks", task.GetTasks)
+	// protectedRouters.GET("/agents", agent.GetAgents)
+
+	// agent api
+	agentRouters := r.Group("/agent")
+	agentRouters.Use(agent.CheckToken)
+
+	agentRouters.POST("/task", agent.GetTask)
 	return r
 }
