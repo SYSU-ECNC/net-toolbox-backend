@@ -1,8 +1,10 @@
 package user
 
 import (
+	"io/ioutil"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,4 +17,13 @@ func GetUserName(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"username": name})
+}
+
+// 需要提交的body为json，分别有agentName、cmd、target三个键
+func AddTaskByUser(c *gin.Context) {
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	jsonObj, _ := simplejson.NewJson(body)
+	agentName, _ := jsonObj.Get("agentName").String()
+	cmd, _ := jsonObj.Get("cmd").String()
+	target, _ := jsonObj.Get("target").String()
 }

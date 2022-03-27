@@ -2,7 +2,6 @@ package user
 
 import (
 	"net/http"
-	"toolBox/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/securecookie"
@@ -28,37 +27,30 @@ func init() {
 	}
 }
 
-func SetCookie(c *gin.Context, UnionID, name string) {
+func SetCookie(c *gin.Context, unionID, name string) {
 	session, _ := store.Get(c.Request, "sessionID")
-	session.Values["UnionID"] = UnionID
+	session.Values["unionID"] = unionID
 	session.Values["name"] = name
 
 	// 将set-cookie写入到response里
 	session.Save(c.Request, c.Writer)
 }
 
-// 验证cookie是否合法，不合法重定向到登录界面
-func VerifyCookie(c *gin.Context) bool {
+// 验证cookie是否合法，不合法则返回401和重定向url
+func CheckCookie(c *gin.Context) {
 	session, err := store.Get(c.Request, "sessionID")
-	if err != nil || session.Values["UnionID"] == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"redirectUrl": config.GetLoginUrl()})
-		return false
+	if err != nil || session.Values["unionID"] == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"redirectUrl": conf.PublicUrl.LoginUrl})
+		c.Abort()
 	}
-	return true
 }
 
 func GetIDFromCookie(c *gin.Context) string {
-	if !VerifyCookie(c) {
-		return ""
-	}
 	session, _ := store.Get(c.Request, "sessionID")
-	return session.Values["UnionID"].(string)
+	return session.Values["unionID"].(string)
 }
 
 func GetNameFromCookie(c *gin.Context) string {
-	if !VerifyCookie(c) {
-		return ""
-	}
 	session, _ := store.Get(c.Request, "sessionID")
 	return session.Values["name"].(string)
 }
