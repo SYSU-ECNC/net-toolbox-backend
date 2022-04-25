@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 	"toolBox/config"
 
 	_ "github.com/lib/pq"
@@ -88,4 +89,29 @@ func AddExecutionToDB(task_id int, agent_name string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+type Agent struct {
+	AgentName      string    `db:"agent_name"`
+	Token          string    `db:"token"`
+	LastTimeActive time.Time `db:"last_time_active"`
+}
+
+func GetAgentListFromDB() []Agent {
+	db := connectDB()
+	row, err := db.Query(`SELECT * from agents`)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var agentList []Agent
+	for row.Next() {
+		var agent Agent
+		err = row.Scan(&agent.AgentName, &agent.Token, &agent.LastTimeActive)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		agentList = append(agentList, agent)
+	}
+	return agentList
 }
