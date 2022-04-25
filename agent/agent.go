@@ -30,6 +30,11 @@ func GetToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+func ReSetToken(c *gin.Context) {
+	token = generateToken(32)
+	GetToken(c)
+}
+
 // func CheckToken(c *gin.Context) {
 // 	request := c.Request
 // 	request.ParseForm()
