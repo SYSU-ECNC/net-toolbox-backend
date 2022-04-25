@@ -22,7 +22,7 @@ type Tasks struct {
 	Command   string   `json:"command"`
 }
 
-func AddTasks(c *gin.Context) {
+func AddTask(c *gin.Context) {
 	var tasks Tasks
 	if err := c.Bind(&tasks); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

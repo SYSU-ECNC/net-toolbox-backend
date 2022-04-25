@@ -75,17 +75,17 @@ func AddTaskToDB(userName, command string) int {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	var task_id int
+	var taskID int
 	for row.Next() {
-		if err := row.Scan(&task_id); err != nil {
+		if err := row.Scan(&taskID); err != nil {
 			log.Fatalln(err)
 		}
 	}
-	return task_id
+	return taskID
 }
 
-func AddExecutionToDB(task_id int, agent_name string) {
-	_, err := DB.Exec(`insert into execution(task_id, agent_name) values($1, $2)`, task_id, agent_name)
+func AddExecutionToDB(taskID int, agent_name string) {
+	_, err := DB.Exec(`insert into execution(task_id, agent_name) values($1, $2)`, taskID, agent_name)
 	if err != nil {
 		log.Fatalln(err)
 	}
