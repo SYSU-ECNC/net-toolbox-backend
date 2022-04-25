@@ -1,6 +1,7 @@
 package user
 
 import (
+	"log"
 	"net/http"
 	"toolBox/models"
 
@@ -36,5 +37,25 @@ func AddTask(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
+	})
+}
+
+type FormAgentName struct {
+	AgentName string `json:"name"`
+}
+
+func DeleteAgent(c *gin.Context) {
+	var agentName FormAgentName
+	if err := c.Bind(&agentName); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": false,
+		})
+		log.Fatalln(err)
+	}
+
+	models.DeleteAgentFromDB(agentName.AgentName)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": true,
 	})
 }
