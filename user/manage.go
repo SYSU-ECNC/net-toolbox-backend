@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 	"toolBox/models"
 
@@ -17,24 +16,23 @@ func GetUserName(c *gin.Context) {
 	})
 }
 
-type Tasks struct {
+type Task struct {
 	AgentName []string `json:"name"`
 	Command   string   `json:"command"`
 }
 
 func AddTask(c *gin.Context) {
-	var tasks Tasks
-	if err := c.Bind(&tasks); err != nil {
+	var task Task
+	if err := c.Bind(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 		})
 		return
 	}
-	fmt.Println(tasks)
 
-	task_id := models.AddTaskToDB(GetNameFromCookie(c), tasks.Command)
-	for _, agentName := range tasks.AgentName {
-		models.AddExecutionToDB(task_id, agentName)
+	taskID := models.AddTaskToDB(GetNameFromCookie(c), task.Command)
+	for _, agentName := range task.AgentName {
+		models.AddExecutionToDB(taskID, agentName)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
