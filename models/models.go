@@ -84,8 +84,8 @@ func AddTaskToDB(userName, command string) int {
 	return taskID
 }
 
-func AddExecutionToDB(taskID int, agent_name string) {
-	_, err := DB.Exec(`insert into execution(task_id, agent_name) values($1, $2)`, taskID, agent_name)
+func AddExecutionToDB(taskID int, agentName string) {
+	_, err := DB.Exec(`insert into execution(task_id, agent_name) values($1, $2)`, taskID, agentName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -98,8 +98,8 @@ type Agent struct {
 }
 
 func GetAgentListFromDB() []Agent {
-	db := connectDB()
-	row, err := db.Query(`SELECT * from agents`)
+
+	row, err := DB.Query(`SELECT * from agents`)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -114,4 +114,11 @@ func GetAgentListFromDB() []Agent {
 		agentList = append(agentList, agent)
 	}
 	return agentList
+}
+
+func DeleteAgentFromDB(agentName string) {
+	_, err := DB.Exec(`DELETE FROM agents WHERE agent_name = $1`, agentName)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
