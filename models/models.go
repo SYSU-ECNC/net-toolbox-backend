@@ -101,7 +101,6 @@ type Agent struct {
 }
 
 func GetAgentListFromDB() []Agent {
-
 	row, err := DB.Query(`SELECT * from agents`)
 	if err != nil {
 		log.Fatalln(err)
@@ -152,4 +151,28 @@ func GetTaskByIDFromDB(ID string) ([]Execution, error) {
 		executionList = append(executionList, execution)
 	}
 	return executionList, err
+}
+
+type TaskResp struct {
+	At      time.Time `db:"submit_at" json:"at"`
+	TaskID  int       `db:"id" json:"task_id"`
+	Command string    `db:"command" json:"command"`
+}
+
+func GetTasksListFromDB() ([]TaskResp, error) {
+	row, err := DB.Query(`SELECT submit_at, id, command FROM tasks`)
+	if err != nil {
+		return nil, err
+	}
+
+	var taskRespList []TaskResp
+	for row.Next() {
+		var taskResp TaskResp
+		err = row.Scan(&taskResp.At, &taskResp.TaskID, &taskResp.Command)
+		if err != nil {
+			return nil, err
+		}
+		taskRespList = append(taskRespList, taskResp)
+	}
+	return taskRespList, err
 }
