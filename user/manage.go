@@ -74,3 +74,15 @@ func GetTaskByID(c *gin.Context) {
 		"results": executionList,
 	})
 }
+
+func GetTasksList(c *gin.Context) {
+	taskRespList, err := models.GetTasksListFromDB()
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"task_list": taskRespList,
+	})
+}
