@@ -50,12 +50,27 @@ func DeleteAgent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": false,
 		})
-		log.Fatalln(err)
+		log.Println(err)
+		return
 	}
 
 	models.DeleteAgentFromDB(agentName.AgentName)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": true,
+	})
+}
+
+func GetTaskByID(c *gin.Context) {
+	ID := c.Param("id")
+	executionList, err := models.GetTaskByIDFromDB(ID)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"results": executionList,
 	})
 }
