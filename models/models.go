@@ -176,3 +176,30 @@ func GetTasksListFromDB() ([]TaskResp, error) {
 	}
 	return taskRespList, err
 }
+
+type AgentTask struct {
+	At     time.Time `db:"submit_at" json:"at"`
+	TaskID int       `db:"id" json:"task_id"`
+	Result string    `db:"result" json:"result"`
+}
+
+func GetTaskListByAgentNameFromDB(agentName string) ([]AgentTask, error) {
+	row, err := DB.Query(`
+	SELECT tasks.submit_at, tasks.id, execution.result
+	FROM tasks, execution
+	where tasks.id = execution.task_id and execution.agent_name = $1`, agentName)
+	if err != nil {
+		return nil, err
+	}
+
+	var agentTaskList []AgentTask
+	for row.Next() {
+		var agentTask AgentTask
+		err = row.Scan(&agentTask.At, &agentTask.TaskID, &agentTask.Result)
+		if err != nil {
+			return nil, err
+		}
+		agentTaskList = append(agentTaskList, agentTask)
+	}
+	return agentTaskList, err
+}
