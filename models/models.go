@@ -11,6 +11,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+//models我认为是服务器内部的操作，所以一旦发生错误，就要fatal，
+//而在manage中，相对来说是对于客户端的响应操作，可以是只输出错误日志而不fatal
+
 // 命名为conf是为了避免和*gin.Context的变量重名
 var conf config.Config = config.GetConfig()
 
@@ -121,4 +124,32 @@ func DeleteAgentFromDB(agentName string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+type Execution struct {
+	At        time.Time `db:"submit_at" json:"at"`
+	AgentName string    `db:"agent_name" json:"agent_name"`
+	Result    string    `db:"result" json:"result"`
+}
+
+func GetTaskByIDFromDB(ID string) ([]Execution, error) {
+	row, err := DB.Query(`
+	SELECT submit_at, agent_name, result
+	FROM tasks, execution
+	where tasks.id = execution.task_id and tasks.id = $1`, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var executionList []Execution
+	for row.Next() {
+		var execution Execution
+		err = row.Scan(&execution.At, &execution.AgentName, &execution.Result)
+		if err != nil {
+			return nil, err
+		}
+		executionList = append(executionList, execution)
+	}
+	return executionList, err
 }
