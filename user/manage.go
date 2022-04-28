@@ -86,3 +86,24 @@ func GetTasksList(c *gin.Context) {
 		"task_list": taskRespList,
 	})
 }
+
+func GetTaskListByAgentName(c *gin.Context) {
+	agentTaskList, err := models.GetTaskListByAgentNameFromDB(c.Query("agent_name"))
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"task_list": agentTaskList,
+	})
+}
+
+func TasksHandler(c *gin.Context) {
+	agentName := c.Query("agent_name")
+	if agentName == "" {
+		GetTasksList(c)
+	} else {
+		GetTaskListByAgentName(c)
+	}
+}

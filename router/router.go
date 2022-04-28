@@ -24,17 +24,19 @@ func SetupRouters() *gin.Engine {
 	userRouters.Use(user.CheckCookie)
 
 	userRouters.GET("/name", user.GetUserName)
-	userRouters.GET("/home", frontendHome)
-	userRouters.GET("/registration/token", agent.GetToken)
-	userRouters.POST("/add/task", agent.AddTaskByUser)
+	userRouters.POST("/ping", user.AddTask)
+	userRouters.GET("/agent/token", agent.GetToken)
+	userRouters.GET("/agent/token/new", agent.ReSetToken)
+	userRouters.DELETE("/agent", user.DeleteAgent)
+	userRouters.GET("/task/:id", user.GetTaskByID)
+	userRouters.GET("/tasks", user.TasksHandler)
 
-	// protectedRouters.GET("tasks", task.GetTasks)
-	// protectedRouters.GET("/agents", agent.GetAgents)
+	userRouters.GET("/home", frontendHome)
 
 	// agent api
-	agentRouters := r.Group("/agent")
-	agentRouters.Use(agent.CheckToken)
+	// agentRouters := r.Group("/agent")
+	// agentRouters.Use(agent.CheckToken)
 
-	agentRouters.POST("/task", agent.GetTask)
+	// agentRouters.POST("/task", agent.GetTask)
 	return r
 }
