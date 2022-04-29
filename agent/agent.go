@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -9,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var token string
+var Token string
 
 func init() {
 	// 生成32位的token
-	token = generateToken(32)
+	Token = generateToken(32)
 }
 
 // 生成token
@@ -28,60 +29,77 @@ func generateToken(n int) string {
 }
 
 func GetToken(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": Token})
 }
 
 func ReSetToken(c *gin.Context) {
-	token = generateToken(32)
+	Token = generateToken(32)
 	GetToken(c)
 }
 
-type AgentResp struct {
-	AgentName string `json:"name"`
-	Status    bool   `json:"status"`
-}
+var DB = models.DB
 
-func GetAgentList() []AgentResp {
-	agentList := models.GetAgentListFromDB()
-	var agentRespList []AgentResp
-	for _, agent := range agentList {
-		var agentResp AgentResp
-		agentResp.AgentName = agent.AgentName
-
-		// China Standard Time UTC + 8:00
-		duration := time.Since(agent.LastTimeActive) + 8*time.Hour
-
-		// 最后见到 Agent 的时间超过 30秒，Master 就认为 Agent 离线
-		agentResp.Status = duration < 30*time.Second
-		agentRespList = append(agentRespList, agentResp)
+func GetTokenFromDB(agentName string) string {
+	var token string
+	row, err := DB.Query(`SELECT token FROM agents WHERE agent_name = $1`, agentName)
+	if err != nil {
+		log.Println(err)
+	} else {
+		for row.Next() {
+			err = row.Scan(&token)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	}
-	return agentRespList
+	return token
 }
 
-// func CheckToken(c *gin.Context) {
-// 	request := c.Request
-// 	request.ParseForm()
-// 	name, agentToken := request.Form["name"], request.Form["token"]
-// 	dbToken := models.GetAgentTokenFromDB(name[0])
-// 	if agentToken[0] == token || agentToken[0] == dbToken {
-// 		// 如果dbToken为空，说明是新注册的agent
-// 		if dbToken == "" {
-// 			models.AddAgent(name[0], token)
-// 		}
+func RefreshTokenInDB(name, token string) {
+	_, err := DB.Exec(`
+	INSERT INTO agents(agent_name, token, last_time_active)
+	VALUES ($1, $2, now() at time zone 'CCT')
+	ON CONFLICT(agent_name)
+	DO NOTHING;
+	`, name, token)
 
-// 	} else {
-// 		// token非法,阻止访问agentApi
-// 		c.Abort()
-// 	}
-// }
+	if err != nil {
+		log.Println(err)
+	}
+}
 
-// 需要提交的body为json，分别有agentName、cmd、target三个键
-// func AddTaskByUser(c *gin.Context) {
-// 	body, _ := ioutil.ReadAll(c.Request.Body)
-// 	jsonObj, _ := simplejson.NewJson(body)
-// 	agentName, _ := jsonObj.Get("agentName").String()
-// 	cmd, _ := jsonObj.Get("cmd").String()
-// 	target, _ := jsonObj.Get("target").String()
+func CheckAgentToken(name, token string) bool {
+	if token == GetTokenFromDB(name) && token != "" {
+		return true
+	} else if token == Token {
+		RefreshTokenInDB(name, token)
+		return true
+	}
+	return false
+}
 
-// 	// return
-// }
+type AgentInfo struct {
+	Name  string `json:"name"`
+	Token string `json:"token"`
+}
+
+func AgentRegister(c *gin.Context) {
+	var agentInfo AgentInfo
+	if err := c.Bind(&agentInfo); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+		})
+		return
+	}
+	if !CheckAgentToken(agentInfo.Name, agentInfo.Token) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": false,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status": true,
+	})
+
+}
