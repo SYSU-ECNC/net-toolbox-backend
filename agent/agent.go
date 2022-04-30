@@ -146,3 +146,38 @@ func GetTaskByAgentName(c *gin.Context) {
 		"command": command,
 	})
 }
+
+type ExecResult struct {
+	Name   string `json:"name"`
+	TaskID int    `json:"task_id"`
+	Result string `json:"result"`
+}
+
+func UpdateResultToExecutionTable(execResult ExecResult) {
+	_, err := DB.Exec(`
+	UPDATE execution 
+	SET result = $3, is_exec = TRUE 
+	WHERE agent_name = $1 and task_id = $2
+	`, execResult.Name, execResult.TaskID, execResult.Result)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func RecieveResultFromAgent(c *gin.Context) {
+	token := c.Request.Header["Authorization"][0]
+
+	var execResult ExecResult
+	if err := c.Bind(&execResult); err != nil {
+		c.JSON(http.StatusBadRequest, nil)
+		log.Println(err)
+		// fmt.Println(execResult)
+		return
+	}
+	if !CheckAgentToken(execResult.Name, token) {
+		c.JSON(http.StatusUnauthorized, nil)
+		return
+	}
+	UpdateResultToExecutionTable(execResult)
+	c.JSON(http.StatusOK, nil)
+}
