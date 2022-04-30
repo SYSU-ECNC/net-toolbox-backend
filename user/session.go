@@ -40,7 +40,10 @@ func SetCookie(c *gin.Context, unionID, name string) {
 func CheckCookie(c *gin.Context) {
 	session, err := store.Get(c.Request, "sessionID")
 	if err != nil || session.Values["unionID"] == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"redirectUrl": conf.PublicUrl.LoginUrl})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":      401,
+			"login_url": conf.PublicUrl.LoginUrl,
+		})
 		c.Abort()
 	}
 }

@@ -34,11 +34,6 @@ func getAppAccessToken() string {
 	return match
 }
 
-func getCode(c *gin.Context) string {
-	ret := c.Query("code")
-	return ret
-}
-
 // 此处结构体成员变量命名首字母不大写就会有警告
 // 因为结构体转json存储时，结构体成员变量首字母必须大写才能成功输出
 // 所以只能写成大驼峰形式
@@ -110,7 +105,7 @@ type User struct {
 }
 
 func Callback(c *gin.Context) {
-	code := getCode(c)
+	code := c.Query("code")
 
 	userMsg := getUserMessage(code)
 	var user User
@@ -126,8 +121,8 @@ func Callback(c *gin.Context) {
 			models.AddUser(name, unionID)
 		}
 		SetCookie(c, unionID, name)
-		redirect_url := conf.PublicUrl.FrontentUrl
-		c.Redirect(http.StatusFound, redirect_url)
+		redirectUrl := conf.PublicUrl.FrontentUrl
+		c.Redirect(http.StatusFound, redirectUrl)
 	} else {
 		c.Redirect(http.StatusInternalServerError, conf.PublicUrl.LoginUrl)
 	}

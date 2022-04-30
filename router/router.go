@@ -27,6 +27,7 @@ func SetupRouters() *gin.Engine {
 	userRouters.POST("/ping", user.AddTask)
 	userRouters.GET("/agent/token", agent.GetToken)
 	userRouters.GET("/agent/token/new", agent.ReSetToken)
+	userRouters.GET("/agents", user.GetAgentList)
 	userRouters.DELETE("/agent", user.DeleteAgent)
 	userRouters.GET("/task/:id", user.GetTaskByID)
 	userRouters.GET("/tasks", user.TasksHandler)
@@ -34,9 +35,8 @@ func SetupRouters() *gin.Engine {
 	userRouters.GET("/home", frontendHome)
 
 	// agent api
-	// agentRouters := r.Group("/agent")
-	// agentRouters.Use(agent.CheckToken)
-
-	// agentRouters.POST("/task", agent.GetTask)
+	r.POST("/agent/new", agent.AgentRegister)
+	r.GET("/agent/task", agent.GetTaskByAgentName)
+	r.POST("/agent/task", agent.RecieveResultFromAgent)
 	return r
 }
