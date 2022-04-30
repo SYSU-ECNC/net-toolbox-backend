@@ -1,21 +1,30 @@
 package agent
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 	"toolBox/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-var Token string
-
 func init() {
 	// 生成32位的token
 	Token = generateToken(32)
+	// 设置日志文件
+	logFile, err := os.OpenFile("./agent.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("open log file failed, err:", err)
+		return
+	}
+	log.SetOutput(logFile)
 }
+
+var Token string
 
 // 生成token
 func generateToken(n int) string {
@@ -101,5 +110,39 @@ func AgentRegister(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
 	})
+}
 
+func GetTaskByAgentNameFromDB(name string) (taskID int, command string) {
+	row, err := DB.Query(`
+	SELECT execution.task_id, tasks.command
+	FROM tasks, execution
+	WHERE tasks.id = execution.task_id and execution.agent_name = $1 and is_exec = FALSE
+	LIMIT 1
+	`, name)
+	if err != nil {
+		log.Println(err)
+		return 0, ""
+	}
+
+	for row.Next() {
+		err = row.Scan(&taskID, &command)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return taskID, command
+}
+
+func GetTaskByAgentName(c *gin.Context) {
+	token := c.Request.Header["Authorization"][0]
+	name := c.Query("agent_name")
+	if !CheckAgentToken(name, token) {
+		c.JSON(http.StatusUnauthorized, nil)
+		return
+	}
+	taskID, command := GetTaskByAgentNameFromDB(name)
+	c.JSON(http.StatusOK, gin.H{
+		"task_id": taskID,
+		"command": command,
+	})
 }
